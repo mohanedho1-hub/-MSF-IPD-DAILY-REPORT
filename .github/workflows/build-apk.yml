@@ -20,16 +20,23 @@ jobs:
           java-version: '17'
       - name: Extract project
         run: unzip MSF_IPD_DAILY_REPORT_source.zip -d extracted
-      - name: Fix Java and Kotlin targets
+      - name: Fix JVM target
         run: |
-          python3 -c "from pathlib import Path; p=Path('extracted/MSF_IPD_DAILY_REPORT/app/build.gradle'); s=p.read_text(); s=s.replace('    compileSdk 35', '''    compileSdk 35
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = '17'
-    }'''); p.write_text(s)"
+          cat >> extracted/MSF_IPD_DAILY_REPORT/app/build.gradle <<'EOF'
+
+          android {
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+
+          tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+              kotlinOptions {
+                  jvmTarget = '17'
+              }
+          }
+          EOF
       - name: Build debug APK
         run: cd extracted/MSF_IPD_DAILY_REPORT && gradle assembleDebug
       - name: Upload APK
