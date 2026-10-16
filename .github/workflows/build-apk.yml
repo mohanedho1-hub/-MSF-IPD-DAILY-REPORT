@@ -13,42 +13,25 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
-      - name: 
-      - name: Extract project and align JVM targets
+      - name: Extract project
+        run: unzip MSF_IPD_DAILY_REPORT_source.zip -d extracted
+      - name: Fix Java and Kotlin targets
         run: |
-          unzip MSF_IPD_DAILY_REPORT_source.zip -d extracted
-          cd extracted/MSF_IPD_DAILY_REPORT
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("app/build.gradle")
-          s = p.read_text()
-          s = s.replace(
-              "    compileSdk 35",
-              """    compileSdk 35
-              compileOptions {
-                  sourceCompatibility JavaVersion.VERSION_17
-                  targetCompatibility JavaVersion.VERSION_17
-              }
-              kotlinOptions {
-                  jvmTarget = '17'
-              }"""
-          )
-          p.write_text(s)
-          PY
-          gradle assembleDebug
-
-        run: |
-         unzip MSF_IPD_DAILY_REPORT_source.zip -d extracted
-          cd extracted/MSF_IPD_DAILY_REPORT
-          gradle assembleDebug
-
+          python3 -c "from pathlib import Path; p=Path('extracted/MSF_IPD_DAILY_REPORT/app/build.gradle'); s=p.read_text(); s=s.replace('    compileSdk 35', '''    compileSdk 35
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }'''); p.write_text(s)"
+      - name: Build debug APK
+        run: cd extracted/MSF_IPD_DAILY_REPORT && gradle assembleDebug
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
